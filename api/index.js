@@ -11,7 +11,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 app.post('/api', async (req, res) => {
     const { model } = req.body;
     try {
-        const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        const geminiModel = genAI.getGenerativeModel({ model: "gemini-pro" });
         // Додаємо жорстку інструкцію
         const prompt = `Знайди ціну в UAH та посилання для: ${model}. Відповідь надай ТІЛЬКИ у форматі JSON: {"price": число, "url": "посилання"}. Без жодного іншого тексту.`;
 
