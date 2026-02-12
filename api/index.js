@@ -12,14 +12,27 @@ app.post('/api', async (req, res) => {
     const { model } = req.body;
     try {
         const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        const prompt = `Знайди актуальну ціну в гривнях (UAH) та посилання на магазин в Україні для: ${model}. Відповідь надай суворо у форматі JSON: {"price": число, "url": "посилання"}. Без зайвого тексту.`;
+        // Додаємо жорстку інструкцію
+        const prompt = `Знайди ціну в UAH та посилання для: ${model}. Відповідь надай ТІЛЬКИ у форматі JSON: {"price": число, "url": "посилання"}. Без жодного іншого тексту.`;
 
         const result = await geminiModel.generateContent(prompt);
         const response = await result.response;
-        const text = response.text().replace(/```json|```/g, "").trim();
-        res.json(JSON.parse(text));
+        let text = response.text();
+
+        // ОЧИЩЕННЯ: Видаляємо маркування Markdown (```json ... ```)
+        text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+        try {
+            const data = JSON.parse(text);
+            res.json(data);
+        } catch (parseError) {
+            console.error("Помилка JSON:", text);
+            // Якщо ШІ натупив з форматом, повертаємо дефолтні дані, щоб сайт не падав
+            res.json({ price: 1000, url: "https://google.com", error: "Format error" });
+        }
     } catch (error) {
-        res.status(500).json({ error: "AI Error" });
+        console.error("AI Error:", error);
+        res.status(500).json({ error: "API Key or Service error" });
     }
 });
 
