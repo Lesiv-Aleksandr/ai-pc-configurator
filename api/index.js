@@ -14,10 +14,11 @@ app.post('/api', async (req, res) => {
     try {
         // УВАГА: Ми явно вказуємо apiVersion: 'v1'
         // Це змусить бібліотеку ігнорувати v1beta і йти за стабільною адресою
-        const model = genAI.getGenerativeModel(
-            { model: "gemini-1.5-flash" },
-            { apiVersion: 'v1' }
-        );
+        // В api/index.js
+const model = genAI.getGenerativeModel(
+    { model: "gemini-1.5-flash-001" }, // Вказуємо конкретну стабільну версію
+    { apiVersion: 'v1' }
+);
 
         const prompt = `Find current price in UAH and shop link for: ${deviceModel}. Return ONLY JSON: {"price": number, "url": "string"}`;
 
