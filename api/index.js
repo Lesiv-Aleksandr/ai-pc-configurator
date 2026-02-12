@@ -6,22 +6,19 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Замініть початок вашого обробника запиту на цей:
+// В api/index.js
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api', async (req, res) => {
     const { model } = req.body;
     try {
-        // Явно вказуємо версію API v1
-        const geminiModel = genAI.getGenerativeModel(
-            { model: "gemini-1.5-flash" }, 
-            { apiVersion: 'v1' } 
-        );
+        // ВИДАЛЯЄМО { apiVersion: 'v1' } та використовуємо стабільну назву
+        const geminiModel = genAI.getGenerativeModel({ model: "gemini-pro" }); 
 
         const prompt = `Знайди ціну в UAH та посилання для: ${model}. Відповідь надай ТІЛЬКИ у форматі JSON: {"price": число, "url": "посилання"}. Без жодного іншого тексту.`;
         
-    
         const result = await geminiModel.generateContent(prompt);
+ 
         const response = await result.response;
         let text = response.text();
 
