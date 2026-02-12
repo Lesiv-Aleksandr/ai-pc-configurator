@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI PC Dream — Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto">
+        <header class="flex flex-col lg:flex-row justify-between items-start gap-8 mb-12">
+            <div class="space-y-2">
+                <h1 class="header-font text-3xl font-bold tracking-tighter text-white flex items-center gap-3">
+                    <span class="w-8 h-8 bg-blue-600 rounded-full inline-block shadow-[0_0_15px_rgba(37,99,235,0.6)]"></span>
+                    AI PC CONFIGURATOR
+                </h1>
+                <p class="text-slate-500">Додайте деталь — Gemini знайде ціну та магазин</p>
+            </div>
+
+            <div class="glass p-6 rounded-3xl w-full lg:w-96 border-t-2 border-blue-500 relative overflow-hidden">
+                <span class="text-xs uppercase tracking-widest text-slate-400 font-bold">Загальна сума збірки</span>
+                <div class="text-5xl font-black text-white mt-1 header-font" id="grand-total">0 ₴</div>
+                <button onclick="refreshAllPrices()" id="refresh-btn" class="mt-4 w-full bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white text-xs font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-wider">
+                    <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-width="2"></path></svg>
+                    Оновити ціни (AI Scan)
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <aside class="lg:col-span-1">
+                <div class="glass p-6 rounded-3xl sticky top-8">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-2 text-white">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"></path></svg>
+                        Новий компонент
+                    </h2>
+                    <div class="space-y-4">
+                        <input type="hidden" id="edit-id" value="">
+                        <div>
+                            <label class="label-text">Категорія (CPU, GPU...)</label>
+                            <input type="text" id="comp-type" placeholder="Наприклад, GPU" class="input-field">
+                        </div>
+                        <div>
+                            <label class="label-text">Модель пристрою</label>
+                            <input type="text" id="comp-model" placeholder="Nvidia RTX 4070 Super" class="input-field">
+                        </div>
+                        <button id="submit-btn" onclick="handleFormSubmit()" class="btn-primary">
+                            Додати та знайти ціну
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-2">
+                <div id="components-container" class="grid gap-4">
+                    </div>
+                <div id="empty-state" class="empty-placeholder">
+                    <p>Ваша збірка порожня. AI чекає на першу деталь.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
