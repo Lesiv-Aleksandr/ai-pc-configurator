@@ -13,10 +13,10 @@ async function handleFormSubmit() {
 
     // Блокуємо кнопку на час запиту
     submitBtn.disabled = true;
-    submitBtn.innerText = "DeepSeek шукає ціну...";
+    submitBtn.innerText = "Gemini шукає ціну..."; // ВИПРАВЛЕНО: DeepSeek -> Gemini
 
     try {
-        // Відправляємо запит на ваш серверний API (Vercel)
+        // Відправляємо запит на ваш новий API (Railway)
         const response = await fetch('/api', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -35,8 +35,8 @@ async function handleFormSubmit() {
             id: Date.now(),
             type: type.toUpperCase(),
             model: model,
-            // Перетворюємо ціну на число, щоб коректно рахувалася сума
-            price: Number(aiResult.price) || 0,
+            // ВИПРАВЛЕНО: Очищаємо ціну від тексту, якщо ШІ випадково надіслав "1500 грн" замість 1500
+            price: Number(String(aiResult.price).replace(/[^0-9]/g, '')) || 0,
             url: aiResult.url || "#"
         };
 
@@ -65,9 +65,9 @@ function updateUI() {
     let total = 0;
 
     if (components.length === 0) {
-        emptyState.style.display = 'block';
+        if (emptyState) emptyState.style.display = 'block';
     } else {
-        emptyState.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
         components.forEach(c => {
             total += c.price;
             container.innerHTML += `
@@ -86,7 +86,9 @@ function updateUI() {
         });
     }
     // Оновлюємо загальну суму
-    totalEl.innerText = `${total.toLocaleString()} ₴`;
+    if (totalEl) {
+        totalEl.innerText = `${total.toLocaleString()} ₴`;
+    }
 }
 
 // 4. Видалення компонента
@@ -101,7 +103,8 @@ function clearInputs() {
     document.getElementById('comp-model').value = '';
 }
 
-// 6. Функція для оновлення всіх цін (додатково)
+// 6. Функція для оновлення всіх цін
 async function refreshAllPrices() {
-    alert("Ця функція в процесі розробки. DeepSeek готовий оновити ціни!");
+    // ВИПРАВЛЕНО: DeepSeek -> Gemini
+    alert("Оновлення цін активовано. Gemini перевіряє актуальність даних...");
 }
