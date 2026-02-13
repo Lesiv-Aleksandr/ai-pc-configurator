@@ -1,31 +1,35 @@
-console.log("ВЕРСІЯ 2.0 ЗАПУЩЕНА (Миттєве додавання)");
+console.log("ВЕРСІЯ 3.0: Миттєве додавання + Fix");
 
 let components = [];
 
-// Основна функція додавання
 async function handleFormSubmit() {
-    const type = document.getElementById('comp-type').value.trim();
-    const model = document.getElementById('comp-model').value.trim();
+    const typeInput = document.getElementById('comp-type');
+    const modelInput = document.getElementById('comp-model');
+    
+    const type = typeInput.value.trim();
+    const model = modelInput.value.trim();
     
     if (!type || !model) return alert("Заповніть всі поля!");
 
-    // 1. Створюємо тимчасовий об'єкт (ціна 0, статус "Loading")
+    // 1. Створюємо об'єкт з унікальним ID
     const tempId = Date.now();
     const newComp = {
         id: tempId,
         type: type.toUpperCase(),
         model: model,
-        price: null, // Сигнал, що ціна ще вантажиться
+        price: 0,
         url: "#",
         loading: true
     };
 
-    // 2. Одразу додаємо в масив та оновлюємо екран
+    // 2. Додаємо в масив та малюємо "заглушку"
     components.push(newComp);
     updateUI();
-    document.getElementById('comp-model').value = ''; // Очищаємо поле
+    
+    // Очищаємо тільки поле моделі для зручності
+    modelInput.value = '';
 
-    // 3. Запускаємо запит до ШІ у фоні
+    // 3. Запит до сервера
     try {
         const response = await fetch('/api', { 
             method: 'POST',
@@ -33,32 +37,34 @@ async function handleFormSubmit() {
             body: JSON.stringify({ model: model })
         });
 
+        if (!response.ok) throw new Error("Помилка сервера");
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
 
-        // Обробляємо отримані дані
+        // ОБРОБКА ЦІНИ: видаляємо все крім цифр
         const finalPrice = Number(String(data.price).replace(/[^0-9]/g, '')) || 0;
-        let finalUrl = data.url || "#";
-        if (finalUrl !== "#" && !finalUrl.startsWith('http')) {
+        
+        // ОБРОБКА ПОСИЛАННЯ: якщо ШІ не дав посилання, робимо пошук у Google
+        let finalUrl = data.url && data.url !== "#" ? data.url : `https://www.google.com/search?q=${encodeURIComponent(model)}+купити+україна`;
+        
+        if (!finalUrl.startsWith('http')) {
             finalUrl = `https://${finalUrl}`;
         }
 
-        // 4. Знаходимо наш елемент у масиві та оновлюємо його
-        const index = components.findIndex(c => c.id === tempId);
-        if (index !== -1) {
-            components[index].price = finalPrice;
-            components[index].url = finalUrl;
-            components[index].loading = false;
-            updateUI(); // Перемальовуємо з реальною ціною
+        // 4. Оновлюємо дані в масиві
+        const compIndex = components.findIndex(c => c.id === tempId);
+        if (compIndex !== -1) {
+            components[compIndex].price = finalPrice;
+            components[compIndex].url = finalUrl;
+            components[compIndex].loading = false;
+            updateUI(); // Перемальовуємо з готовими даними
         }
 
     } catch (error) {
-        console.error("Помилка фонового запиту:", error);
-        // У разі помилки ставимо 0, щоб не висіло вічне завантаження
-        const index = components.findIndex(c => c.id === tempId);
-        if (index !== -1) {
-            components[index].price = 0;
-            components[index].loading = false;
+        console.error("Fetch error:", error);
+        const compIndex = components.findIndex(c => c.id === tempId);
+        if (compIndex !== -1) {
+            components[compIndex].loading = false;
+            components[compIndex].url = `https://www.google.com/search?q=${encodeURIComponent(model)}`;
             updateUI();
         }
     }
@@ -73,40 +79,41 @@ function updateUI() {
     let total = 0;
 
     components.forEach(c => {
-        total += (c.price || 0);
+        total += c.price;
         
-        // Формуємо блок ціни залежно від того, вантажиться вона чи ні
-        const priceDisplay = c.loading 
-            ? `<span class="text-sm text-blue-300 animate-pulse">Шукаємо ціну...</span>` 
+        const priceText = c.loading 
+            ? `<span class="text-blue-400 animate-pulse text-sm">Шукаємо ціну...</span>` 
             : `${c.price.toLocaleString()} ₴`;
 
-        const linkDisplay = c.loading || c.url === "#"
-            ? `<span class="text-xs text-slate-600">Очікуйте...</span>`
-            : `<a href="${c.url}" target="_blank" rel="noopener noreferrer" class="text-xs text-slate-400 underline hover:text-blue-300">В магазин</a>`;
+        const linkHTML = c.loading 
+            ? `<span class="text-xs text-slate-500 italic">Очікуйте...</span>`
+            : `<a href="${c.url}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-400 underline hover:text-blue-300">Переглянути в магазині</a>`;
 
         container.innerHTML += `
-            <div class="glass p-4 rounded-2xl flex justify-between items-center mb-3 border border-white/5">
+            <div class="glass p-4 rounded-2xl flex justify-between items-center mb-3 border border-white/5 animate-fade-in">
                 <div>
-                    <div class="text-xs text-blue-400 font-bold">${c.type}</div>
-                    <div class="text-white font-semibold">${c.model}</div>
-                    ${linkDisplay}
+                    <div class="text-xs text-blue-500 font-bold">${c.type}</div>
+                    <div class="text-white font-semibold text-sm md:text-base">${c.model}</div>
+                    ${linkHTML}
                 </div>
                 <div class="text-right">
-                    <div class="text-xl text-white font-bold">${priceDisplay}</div>
-                    <button onclick="deleteComp(${c.id})" class="text-xs text-red-500 mt-1 hover:text-red-400">Видалити</button>
+                    <div class="text-xl text-white font-bold">${priceText}</div>
+                    <button onclick="deleteComp(${c.id})" class="text-xs text-red-500 mt-1 hover:underline">Видалити</button>
                 </div>
             </div>`;
     });
 
-    if (totalEl) totalEl.innerText = `${total.toLocaleString()} ₴`;
+    if (totalEl) {
+        totalEl.innerText = total > 0 ? `${total.toLocaleString()} ₴` : "0 ₴";
+    }
 }
 
-// Функція оновлення всіх цін
+// Функція оновлення всіх цін одночасно
 async function refreshAllPrices() {
     if (components.length === 0) return alert("Список порожній!");
     
     // Ставимо всім статус завантаження
-    components.forEach(c => c.loading = true);
+    components = components.map(c => ({ ...c, loading: true }));
     updateUI();
 
     for (let i = 0; i < components.length; i++) {
@@ -121,11 +128,10 @@ async function refreshAllPrices() {
             components[i].price = Number(String(data.price).replace(/[^0-9]/g, '')) || 0;
             components[i].url = data.url.startsWith('http') ? data.url : `https://${data.url}`;
             components[i].loading = false;
-            updateUI(); // Оновлюємо після кожної деталі
         } catch (e) {
             components[i].loading = false;
-            updateUI();
         }
+        updateUI(); // Оновлюємо після кожного успішного запиту
     }
 }
 
