@@ -12,33 +12,26 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api', async (req, res) => {
     const { model: deviceModel } = req.body;
-    
-    if (!deviceModel) {
-        return res.status(400).json({ error: "Назва моделі відсутня" });
-    }
+    if (!deviceModel) return res.status(400).json({ error: "Назва моделі відсутня" });
 
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        // Покращений запит: вимагаємо повне посилання з https
-        const prompt = `Ти — експерт з комп'ютерного заліза. Знайди актуальну ціну в Україні (грн) та ПРЯМЕ РОБОЧЕ посилання на товар у магазинах (Telemart, Rozetka або Brain) для: ${deviceModel}. 
-        Якщо точну ціну не знайдено, вкажи середню по ринку.
+        const prompt = `Ти — експерт з цін на ПК залізо в Україні. 
+        Знайди АКТУАЛЬНУ ціну (грн) та ПРЯМЕ ПОВНЕ посилання на товар у великому магазині (Telemart, Rozetka або Brain) для: ${deviceModel}. 
         Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "повне посилання з https://"}. 
-        Тільки чистий JSON, без жодних пояснень.`;
+        Тільки чистий JSON.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text().trim();
 
         const jsonMatch = text.match(/\{[\s\S]*\}/);
-        
         if (jsonMatch) {
-            const data = JSON.parse(jsonMatch[0]);
-            res.json(data);
+            res.json(JSON.parse(jsonMatch[0]));
         } else {
             throw new Error("ШІ повернув некоректний формат");
         }
-
     } catch (error) {
         console.error("AI Error:", error.message);
         res.status(500).json({ error: "Помилка ШІ", details: error.message });
