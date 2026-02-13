@@ -21,9 +21,9 @@ app.post('/api', async (req, res) => {
         // Використовуємо актуальну модель 2.5-flash
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const prompt = `Знайди ціну в Україні (грн) та посилання на товар: ${deviceModel}. 
-        Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "рядок"}. 
-        Тільки чистий JSON.`;
+        const prompt = `Знайди ціну в Україні (грн) та пряме посилання на товар у великому магазині (Rozetka, Telemart або Brain): ${deviceModel}. 
+Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "посилання"}. 
+Важливо: Посилання має бути реальним та робочим. Тільки чистий JSON.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
