@@ -18,24 +18,25 @@ app.post('/api', async (req, res) => {
     }
 
     try {
-        // Використовуємо актуальну модель 2.5-flash
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        const prompt = `Знайди ціну в Україні (грн) та пряме посилання на товар у великому магазині (Rozetka, Telemart або Brain): ${deviceModel}. 
-Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "посилання"}. 
-Важливо: Посилання має бути реальним та робочим. Тільки чистий JSON.`;
+        // Покращений запит: вимагаємо повне посилання з https
+        const prompt = `Ти — експерт з комп'ютерного заліза. Знайди актуальну ціну в Україні (грн) та ПРЯМЕ РОБОЧЕ посилання на товар у магазинах (Telemart, Rozetka або Brain) для: ${deviceModel}. 
+        Якщо точну ціну не знайдено, вкажи середню по ринку.
+        Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "повне посилання з https://"}. 
+        Тільки чистий JSON, без жодних пояснень.`;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        let text = response.text().trim();
+        const text = response.text().trim();
 
-        // Надійний пошук JSON у тексті
         const jsonMatch = text.match(/\{[\s\S]*\}/);
+        
         if (jsonMatch) {
-            const cleanJson = JSON.parse(jsonMatch[0]);
-            res.json(cleanJson);
+            const data = JSON.parse(jsonMatch[0]);
+            res.json(data);
         } else {
-            throw new Error("ШІ надіслав дані у невірному форматі");
+            throw new Error("ШІ повернув некоректний формат");
         }
 
     } catch (error) {
