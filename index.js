@@ -9,7 +9,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        const modelAI = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const modelAI = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
         // Спрощуємо промпт. Чим менше тексту — тим менше шансів на статус "Помилка"
         const prompt = `Find cheapest price in Ukraine for ${req.body.model}. 
