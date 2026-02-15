@@ -12,33 +12,40 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 app.post('/api', async (req, res) => {
     const { model: deviceModel } = req.body;
-    if (!deviceModel) return res.status(400).json({ error: "Назва моделі відсутня" });
+    if (!deviceModel) return res.status(400).json({ error: "No model" });
 
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-        const prompt = `Ти — експерт з цін на ПК залізо в Україні. 
-        Знайди АКТУАЛЬНУ ціну (грн) та ПРЯМЕ ПОВНЕ посилання на товар у великому магазині (Telemart, Rozetka або Brain) для: ${deviceModel}. 
-        Відповідь надай СУВОРО у форматі JSON: {"price": число, "url": "повне посилання з https://"}. 
-        Тільки чистий JSON.`;
+        
+        const prompt = `Find the current price in Ukraine (UAH) and a store link for: ${deviceModel}. 
+        Return ONLY a JSON object: {"price": number, "url": "string"}. No extra text.`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text().trim();
+        const text = result.response.text().trim();
+        
+        console.log("RAW RESPONSE FROM AI:", text);
 
+        // Регулярний вираз для пошуку JSON { ... }
         const jsonMatch = text.match(/\{[\s\S]*\}/);
+        
         if (jsonMatch) {
-            res.json(JSON.parse(jsonMatch[0]));
+            const data = JSON.parse(jsonMatch[0]);
+            // Очищаємо ціну, якщо ШІ раптом прислав рядок "5000 грн" замість числа
+            const cleanPrice = parseInt(String(data.price).replace(/\D/g, '')) || 0;
+            
+            res.json({
+                price: cleanPrice,
+                url: data.url || "#"
+            });
         } else {
-            throw new Error("ШІ повернув некоректний формат");
+            throw new Error("JSON not found in response");
         }
+
     } catch (error) {
-        console.error("AI Error:", error.message);
-        res.status(500).json({ error: "Помилка ШІ", details: error.message });
+        console.error("SERVER ERROR:", error.message);
+        res.status(500).json({ price: 0, url: "#", details: error.message });
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Сервер працює на порту ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
