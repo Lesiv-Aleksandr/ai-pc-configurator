@@ -1,17 +1,31 @@
 let components = [];
 
+// Автоматичний фокус на модель після вибору категорії
+document.getElementById('comp-type').addEventListener('input', function(e) {
+    const val = e.target.value;
+    const options = document.getElementById('categories').options;
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === val) {
+            document.getElementById('comp-model').focus();
+            break;
+        }
+    }
+});
+
 async function handleFormSubmit() {
-    const modelInput = document.getElementById('comp-model');
     const typeInput = document.getElementById('comp-type');
+    const modelInput = document.getElementById('comp-model');
     const model = modelInput.value.trim();
-    if(!model) return;
+    const type = typeInput.value.trim();
+
+    if(!model || !type) return alert("Заповніть обидва поля!");
 
     const id = Date.now();
-    components.push({ id, type: typeInput.value, model, price: 0, loading: true });
+    // Додаємо в список миттєво зі статусом завантаження
+    components.push({ id, type, model, price: 0, loading: true, url: "#" });
     updateUI();
-    modelInput.value = '';
-
-    console.log("Надсилаю запит до сервера для:", model);
+    
+    modelInput.value = ''; // Очищаємо поле моделі
 
     try {
         const res = await fetch('/api', {
@@ -21,38 +35,51 @@ async function handleFormSubmit() {
         });
         
         const data = await res.json();
-        console.log("ОТРИМАНО ВІД СЕРВЕРА:", data);
 
         const idx = components.findIndex(c => c.id === id);
         if(idx !== -1) {
-            components[idx].price = data.price;
+            components[idx].price = data.price || 0;
             components[idx].url = data.url;
             components[idx].loading = false;
             updateUI();
         }
     } catch (err) {
-        console.error("Fetch error:", err);
+        console.error("Помилка:", err);
+        const idx = components.findIndex(c => c.id === id);
+        if(idx !== -1) {
+            components[idx].loading = false;
+            updateUI();
+        }
     }
 }
 
 function updateUI() {
     const container = document.getElementById('components-container');
+    if (components.length === 0) {
+        container.innerHTML = `<div class="border-2 border-dashed border-white/5 rounded-3xl p-20 text-center text-slate-500 italic">Ваша збірка порожня.</div>`;
+        document.getElementById('grand-total').innerText = "0 ₴";
+        return;
+    }
+
     container.innerHTML = components.map(c => `
-        <div class="glass p-4 mb-3 flex justify-between">
+        <div class="glass p-5 rounded-3xl flex justify-between items-center border border-white/5 animate-fade-in">
             <div>
-                <div class="text-blue-400 text-xs font-bold">${c.type}</div>
-                <div class="text-white font-semibold">${c.model}</div>
-                ${c.loading ? '<span class="text-xs">Шукаю ціну...</span>' : `<a href="${c.url}" target="_blank" class="text-xs underline text-blue-400">В магазин</a>`}
+                <div class="text-blue-500 text-[10px] font-black uppercase tracking-wider">${c.type}</div>
+                <div class="text-white font-bold text-lg">${c.model}</div>
+                ${c.loading ? 
+                    '<span class="text-xs text-slate-500 animate-pulse">Gemini шукає ціну...</span>' : 
+                    `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 underline hover:text-blue-300 transition">Відкрити в магазині</a>`
+                }
             </div>
             <div class="text-right">
-                <div class="text-xl text-white font-bold">${c.loading ? '...' : c.price.toLocaleString() + ' ₴'}</div>
-                <button onclick="deleteComp(${c.id})" class="text-xs text-red-500">Видалити</button>
+                <div class="text-2xl text-white font-black">${c.loading ? '...' : c.price.toLocaleString('uk-UA') + ' ₴'}</div>
+                <button onclick="deleteComp(${c.id})" class="text-[10px] text-red-500 font-bold uppercase hover:text-red-400 mt-1">Видалити</button>
             </div>
         </div>
     `).join('');
     
     const total = components.reduce((sum, c) => sum + (c.price || 0), 0);
-    document.getElementById('grand-total').innerText = total.toLocaleString() + ' ₴';
+    document.getElementById('grand-total').innerText = total.toLocaleString('uk-UA') + ' ₴';
 }
 
 function deleteComp(id) {
