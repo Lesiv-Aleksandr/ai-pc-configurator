@@ -4,16 +4,14 @@ async function handleFormSubmit() {
     const modelInput = document.getElementById('comp-model');
     const typeInput = document.getElementById('comp-type');
     const model = modelInput.value.trim();
-    const type = typeInput.value;
-
     if(!model) return;
 
     const id = Date.now();
-    components.push({ id, type, model, price: 0, loading: true });
+    components.push({ id, type: typeInput.value, model, price: 0, loading: true });
     updateUI();
     modelInput.value = '';
 
-    console.log("Відправляю запит для:", model);
+    console.log("Надсилаю запит до сервера для:", model);
 
     try {
         const res = await fetch('/api', {
@@ -23,7 +21,7 @@ async function handleFormSubmit() {
         });
         
         const data = await res.json();
-        console.log("Отримано дані:", data);
+        console.log("ОТРИМАНО ВІД СЕРВЕРА:", data);
 
         const idx = components.findIndex(c => c.id === id);
         if(idx !== -1) {
@@ -33,27 +31,27 @@ async function handleFormSubmit() {
             updateUI();
         }
     } catch (err) {
-        console.error("Помилка запиту:", err);
+        console.error("Fetch error:", err);
     }
 }
 
 function updateUI() {
     const container = document.getElementById('components-container');
     container.innerHTML = components.map(c => `
-        <div class="glass p-4 mb-3 flex justify-between animate-fade-in">
+        <div class="glass p-4 mb-3 flex justify-between">
             <div>
                 <div class="text-blue-400 text-xs font-bold">${c.type}</div>
                 <div class="text-white font-semibold">${c.model}</div>
-                ${c.loading ? '<span class="text-xs text-slate-500">Шукаю посилання...</span>' : `<a href="${c.url}" target="_blank" class="text-xs underline text-blue-400">Переглянути в магазині</a>`}
+                ${c.loading ? '<span class="text-xs">Шукаю ціну...</span>' : `<a href="${c.url}" target="_blank" class="text-xs underline text-blue-400">В магазин</a>`}
             </div>
             <div class="text-right">
                 <div class="text-xl text-white font-bold">${c.loading ? '...' : c.price.toLocaleString() + ' ₴'}</div>
-                <button onclick="deleteComp(${c.id})" class="text-xs text-red-500 mt-1">Видалити</button>
+                <button onclick="deleteComp(${c.id})" class="text-xs text-red-500">Видалити</button>
             </div>
         </div>
     `).join('');
     
-    const total = components.reduce((sum, c) => sum + c.price, 0);
+    const total = components.reduce((sum, c) => sum + (c.price || 0), 0);
     document.getElementById('grand-total').innerText = total.toLocaleString() + ' ₴';
 }
 
