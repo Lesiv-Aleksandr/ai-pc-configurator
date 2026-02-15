@@ -10,24 +10,19 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 app.post('/api', async (req, res) => {
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        
-        // Запитуємо тільки число, щоб не було помилок парсингу
-        const prompt = `Надай тільки середню ціну в грн для комплектуючого: ${req.body.model}. 
-        Напиши ТІЛЬКИ число (наприклад 15000), без жодного іншого тексту.`;
+        const prompt = `Average price in UAH for: ${req.body.model}. Output ONLY the number, no text.`;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
         
-        // Очищення від будь-яких літер, залишаємо лише цифри
         let price = parseInt(text.replace(/\D/g, '')) || 0;
+        // Запобіжник від занадто довгих чисел
+        if (price > 1000000) price = Math.floor(price / 100); 
 
-        // Посилання на пошук — найнадійніший варіант проти 404
+        // Посилання на пошук для уникнення 404
         const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}`;
         
-        console.log(`Запит: ${req.body.model} | Ціна: ${price}`);
-        
         res.json({ price, url: searchUrl });
-
     } catch (error) {
         console.error("AI Error:", error.message);
         res.status(500).json({ price: 0, url: "#" });
@@ -35,6 +30,4 @@ app.post('/api', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Сервер працює на порту ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
