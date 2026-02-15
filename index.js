@@ -9,29 +9,43 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        // Використовуємо 2.0 Flash — вона зараз найкраще підтримує пошук через API
         const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash" 
+            model: "gemini-2.0-flash",
+            generationConfig: {
+                temperature: 0,
+                responseMimeType: "application/json"
+            }
         });
 
         const deviceModel = req.body.model;
+
+        const prompt = `
+        Оціни середню ринкову ціну в Україні для: ${deviceModel}.
         
-        // Промпт, який вимагає актуальних даних з українських магазинів
-        const prompt = `Використовуй Google Search. Знайди реальну ціну в гривнях (UAH) для ${deviceModel} в магазинах України (Telemart, Rozetka, Hotline). 
-        Відповідь надай ТІЛЬКИ у вигляді числа. Якщо знайдено кілька варіантів — виведи середню ціну. 
-        Жодного тексту, тільки цифри.`;
+        Поверни ТІЛЬКИ JSON у форматі:
+        {
+          "price": number
+        }
+
+        Без пояснень. Без тексту. Тільки JSON.
+        `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text().trim();
-        
-        // Очищаємо відповідь від усього, крім цифр
-        const price = parseInt(text.replace(/\D/g, '')) || 0;
-        
-        // Генеруємо посилання на пошук в Telemart
+        const text = response.text();
+
+        let price = 0;
+
+        try {
+            const parsed = JSON.parse(text);
+            if (typeof parsed.price === "number") {
+                price = parsed.price;
+            }
+        } catch (e) {
+            console.error("JSON parse error:", text);
+        }
+
         const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(deviceModel)}`;
-        
-        console.log(`AI знайшов для ${deviceModel}: ${price} грн`);
 
         res.json({ price, url: searchUrl });
 
