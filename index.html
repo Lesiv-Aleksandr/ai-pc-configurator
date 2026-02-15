@@ -7,7 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
-        body { background: #0f172a; color: white; min-height: 100vh; }
+        body { background: #0f172a; color: white; min-height: 100vh; font-family: sans-serif; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="p-5">
@@ -15,36 +17,53 @@
         <header class="flex justify-between items-center mb-10">
             <div>
                 <h1 class="text-3xl font-bold italic tracking-tighter text-blue-500">AI PC CONFIGURATOR</h1>
-                <p class="text-slate-400 text-sm">Додайте деталь — Gemini знайде ціну та магазин</p>
+                <p class="text-slate-400 text-sm">Додайте деталь — Gemini знайде ціну</p>
             </div>
-            <div class="glass p-6 rounded-3xl border border-blue-500/30 text-right">
-                <span class="text-xs text-slate-400 uppercase tracking-widest">Загальна сума збірки</span>
+            <div class="glass p-6 rounded-3xl border border-blue-500/30 text-right min-w-[200px]">
+                <span class="text-xs text-slate-400 uppercase tracking-widest">Загальна сума</span>
                 <div id="grand-total" class="text-4xl font-black italic">0 ₴</div>
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div class="glass p-6 rounded-3xl border border-white/10 h-fit">
-                <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
-                    <span class="text-blue-500 text-2xl">+</span> Новий компонент
-                </h2>
-                
+                <h2 class="text-xl font-bold mb-4">Новий компонент</h2>
                 <div class="space-y-4">
                     <div>
-                        <label class="text-[10px] uppercase text-slate-500 font-bold ml-2">Категорія (CPU, GPU...)</label>
-                        <input list="categories" id="comp-type" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 transition" placeholder="Напр. Відеокарта">
+                        <label class="text-[10px] uppercase text-slate-500 font-bold ml-2">Категорія</label>
+                        <input list="categories" id="comp-type" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition" placeholder="Напр. Відеокарта">
                         <datalist id="categories">
                             <option value="Процесор">
                             <option value="Відеокарта">
                             <option value="Материнська плата">
                             <option value="Оперативна пам'ять">
-                            <option value="Блок живлення">
                             <option value="SSD диск">
-                            <option value="Корпус">
-                            <option value="Охолодження">
+                            <option value="Блок живлення">
                         </datalist>
                     </div>
-
                     <div>
-                        <label class="text-[10px] uppercase text-slate-500 font-bold ml-2">Модель пристрою</label>
-                        <input list="models" id="comp-model" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 transition" placeholder="Напр. Nvidia RTX 40
+                        <label class="text-[10px] uppercase text-slate-500 font-bold ml-2">Модель</label>
+                        <input list="models" id="comp-model" class="w-full bg-slate-800/50 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-blue-500 transition" placeholder="Напр. RTX 4070 Super">
+                        <datalist id="models">
+                            <option value="Nvidia RTX 4070 Super">
+                            <option value="AMD Ryzen 7 7800X3D">
+                            <option value="Intel Core i5-13600K">
+                            <option value="Samsung 980 Pro 1TB">
+                        </datalist>
+                    </div>
+                    <button onclick="handleFormSubmit()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all active:scale-95">
+                        Додати та знайти ціну
+                    </button>
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <div id="components-container" class="space-y-4">
+                    <div class="border-2 border-dashed border-white/5 rounded-3xl p-20 text-center text-slate-500 italic">Ваша збірка порожня.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js?v=fresh_start"></script>
+</body>
+</html>
