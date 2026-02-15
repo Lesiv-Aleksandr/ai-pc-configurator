@@ -1,6 +1,6 @@
 let components = [];
 
-// Автоматичний фокус на модель після вибору категорії
+// Авто-перехід на модель після вибору категорії
 document.getElementById('comp-type').addEventListener('input', function(e) {
     const val = e.target.value;
     const options = document.getElementById('categories').options;
@@ -21,11 +21,9 @@ async function handleFormSubmit() {
     if(!model || !type) return alert("Заповніть обидва поля!");
 
     const id = Date.now();
-    // Додаємо в список миттєво зі статусом завантаження
     components.push({ id, type, model, price: 0, loading: true, url: "#" });
     updateUI();
-    
-    modelInput.value = ''; // Очищаємо поле моделі
+    modelInput.value = '';
 
     try {
         const res = await fetch('/api', {
@@ -33,7 +31,6 @@ async function handleFormSubmit() {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ model })
         });
-        
         const data = await res.json();
 
         const idx = components.findIndex(c => c.id === id);
@@ -44,19 +41,14 @@ async function handleFormSubmit() {
             updateUI();
         }
     } catch (err) {
-        console.error("Помилка:", err);
-        const idx = components.findIndex(c => c.id === id);
-        if(idx !== -1) {
-            components[idx].loading = false;
-            updateUI();
-        }
+        console.error("Error:", err);
     }
 }
 
 function updateUI() {
     const container = document.getElementById('components-container');
     if (components.length === 0) {
-        container.innerHTML = `<div class="border-2 border-dashed border-white/5 rounded-3xl p-20 text-center text-slate-500 italic">Ваша збірка порожня.</div>`;
+        container.innerHTML = `<div class="border-2 border-dashed border-white/5 rounded-3xl p-20 text-center text-slate-500 italic">Збірка порожня.</div>`;
         document.getElementById('grand-total').innerText = "0 ₴";
         return;
     }
@@ -66,10 +58,8 @@ function updateUI() {
             <div>
                 <div class="text-blue-500 text-[10px] font-black uppercase tracking-wider">${c.type}</div>
                 <div class="text-white font-bold text-lg">${c.model}</div>
-                ${c.loading ? 
-                    '<span class="text-xs text-slate-500 animate-pulse">Gemini шукає ціну...</span>' : 
-                    `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 underline hover:text-blue-300 transition">Відкрити в магазині</a>`
-                }
+                ${c.loading ? '<span class="text-xs text-slate-500 animate-pulse">AI шукає...</span>' : 
+                `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 underline">В магазин</a>`}
             </div>
             <div class="text-right">
                 <div class="text-2xl text-white font-black">${c.loading ? '...' : c.price.toLocaleString('uk-UA') + ' ₴'}</div>
