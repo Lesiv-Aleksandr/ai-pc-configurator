@@ -9,29 +9,30 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        // Використовуємо стабільну 2.0 Flash
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const modelAI = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        const prompt = `Aktualna cina v UAH (Ukraine, Feb 2026) dlya: ${req.body.model}. 
-        Napyshy TILKY CHYSLO. Bez tekstu. Jaksho cina 25000.50 - napyshy 25000.`;
+        // Дуже точний запит, щоб ШІ не вигадував мільйони
+        const prompt = `Current average price in UAH for ${req.body.model} in Ukraine stores. 
+        Respond ONLY with the number. If price is 50,000 UAH, write 50000.`;
 
-        const result = await model.generateContent(prompt);
-        const text = result.response.text().trim().replace(/\D/g, '');
+        const result = await modelAI.generateContent(prompt);
+        let text = result.response.text().trim().replace(/\D/g, '');
         
         let price = parseInt(text) || 0;
         
-        // Корекція розрядності (захист від помилок ШІ)
-        if (price > 500000) price = Math.floor(price / 100);
+        // Корекція розрядності: якщо ціна > 300к (для однієї деталі це забагато), 
+        // ймовірно ШІ додав зайві нулі (копійки)
+        if (price > 300000) price = Math.round(price / 100);
 
-        res.json({ 
-            price, 
-            url: `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}` 
-        });
+        // Повне посилання на Telemart з кодуванням пробілів
+        const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}`;
+
+        res.json({ price, url: searchUrl });
     } catch (e) {
-        console.error("AI Error:", e.message);
+        console.error(e);
         res.json({ price: 0, url: "#" });
     }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => console.log(`Server OK on ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Server on port ${PORT}`));
