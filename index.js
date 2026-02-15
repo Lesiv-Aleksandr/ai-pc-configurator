@@ -9,7 +9,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        const modelAI = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const modelAI = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `Aktualna cina v UAH dlya ${req.body.model} v Ukraini. Napyshy TILKY CHYSLO bez tekstu. Jaksho cina 25000.50 - napyshy 25000.`;
 
         const result = await modelAI.generateContent(prompt);
