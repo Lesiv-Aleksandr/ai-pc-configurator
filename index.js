@@ -11,7 +11,7 @@ app.post('/api', async (req, res) => {
     try {
         console.log("Запит для моделі:", req.body.model);
         
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-3.0-flash" });
         const prompt = `Price in UAH for ${req.body.model}. Write ONLY the number.`;
 
         const result = await model.generateContent(prompt);
