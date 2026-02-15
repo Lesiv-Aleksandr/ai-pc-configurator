@@ -3,31 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Smart Price</title>
+    <title>AI SMART PRICE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
-        body { background: #0b0f1a; color: white; min-height: 100vh; font-family: system-ui, sans-serif; }
-        .btn-update { background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); }
-        .btn-update:hover { background: rgba(59, 130, 246, 0.2); }
+        body { background: #0b0f1a; color: white; min-height: 100vh; font-family: sans-serif; }
+        .update-btn { background: #1e293b; border: 1px solid #3b82f6; transition: all 0.3s; }
+        .update-btn:hover { background: #3b82f6; color: white; transform: scale(1.05); }
     </style>
 </head>
 <body class="p-6">
     <div class="max-w-5xl mx-auto">
         <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
             <div>
-                <h1 class="text-4xl font-black italic tracking-tighter text-blue-500 uppercase">AI SMART PRICE</h1>
-                <p class="text-slate-400">Пошук найнижчої ціни по всій Україні</p>
+                <h1 class="text-4xl font-black italic text-blue-500 uppercase">AI SMART PRICE</h1>
+                <p class="text-slate-400">Пошук найнижчої ціни: OLX, Rozetka, Hotline</p>
             </div>
             <div class="glass p-8 rounded-[2rem] text-right min-w-[280px]">
-                <span class="text-xs uppercase tracking-widest text-slate-500 font-bold">Сума найкращих цін</span>
+                <span class="text-xs uppercase text-slate-500 font-bold">Сума найкращих цін</span>
                 <div id="grand-total" class="text-5xl font-black italic mt-1 text-white">0 ₴</div>
-                <button onclick="refreshAllPrices()" class="btn-update text-blue-400 text-xs px-4 py-2 rounded-full mt-4 transition-all flex items-center gap-2 ml-auto">
-                    <span>↻</span> Оновити всі ціни
+                <button onclick="refreshAllPrices()" class="update-btn text-blue-400 text-xs px-6 py-2 rounded-full mt-4 font-bold">
+                    ↻ ОНОВИТИ ВСІ ЦІНИ
                 </button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <aside class="glass p-8 rounded-[2rem] h-fit">
-                <h2 class
+                <h2 class="text-xl font-bold mb-6 italic text-blue-400">+ Знайти вигоду</h2>
+                <div class="space-y-5">
+                    <input list="type-list" id="comp-type" placeholder="Що шукаємо? (напр. GPU)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500">
+                    <datalist id="type-list"></datalist>
+
+                    <input list="model-list" id="comp-model" placeholder="Модель (напр. RTX 3060)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500">
+                    <datalist id="model-list"></datalist>
+
+                    <button onclick="handleFormSubmit()" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-bold text-lg shadow-xl active:scale-95 transition-all">
+                        ДОДАТИ ТА ШУКАТИ
+                    </button>
+                </div>
+            </aside>
+
+            <main class="lg:col-span-2 space-y-4" id="components-container">
+                <div class="text-center py-20 text-slate-600 italic">Тут з'явиться найнижча ціна з інтернету...</div>
+            </main>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
