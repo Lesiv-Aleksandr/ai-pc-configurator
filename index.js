@@ -9,25 +9,28 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        console.log("Запит для моделі:", req.body.model);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         
-        const model = genAI.getGenerativeModel({ model: "gemini-3.0-flash" });
-        const prompt = `Price in UAH for ${req.body.model}. Write ONLY the number.`;
+        // Запитуємо тільки число, щоб не було помилок парсингу
+        const prompt = `Надай тільки середню ціну в грн для комплектуючого: ${req.body.model}. 
+        Напиши ТІЛЬКИ число (наприклад 15000), без жодного іншого тексту.`;
 
         const result = await model.generateContent(prompt);
         const text = result.response.text().trim();
         
-        console.log("ВІДПОВІДЬ ШІ:", text); // ПЕРЕВІРТЕ ЦЕ В RAILWAY LOGS
+        // Очищення від будь-яких літер, залишаємо лише цифри
+        let price = parseInt(text.replace(/\D/g, '')) || 0;
 
-        // Очищаємо текст від букв, залишаємо тільки цифри
-        const price = parseInt(text.replace(/\D/g, '')) || 0;
+        // Посилання на пошук — найнадійніший варіант проти 404
         const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}`;
         
-        res.json({ price: price, url: searchUrl });
+        console.log(`Запит: ${req.body.model} | Ціна: ${price}`);
+        
+        res.json({ price, url: searchUrl });
 
     } catch (error) {
-        console.error("ПОМИЛКА API:", error.message);
-        res.json({ price: 0, url: "#", error: error.message });
+        console.error("AI Error:", error.message);
+        res.status(500).json({ price: 0, url: "#" });
     }
 });
 
