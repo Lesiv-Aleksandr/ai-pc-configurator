@@ -1,29 +1,39 @@
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+app.use(express.static('./'));
+
+// Обов'язково перевіряємо ключ
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
 app.post('/api', async (req, res) => {
     try {
+        if (!process.env.GEMINI_API_KEY) {
+            return res.json({ price: 0, url: "#", error: "Ключ API не налаштовано" });
+        }
+
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-        // Просимо ШІ бути максимально простим
-        const prompt = `Provide only the price in UAH for this PC component: ${req.body.model}. 
-        Output format: JUST THE NUMBER. Nothing else.`;
+        const prompt = `Напиши тільки ціну в гривнях для ${req.body.model}. Тільки число, без тексту.`;
         
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = response.text().trim();
         
-        console.log("RAW AI RESPONSE:", text); // Це ви побачите в логах Railway
-
-        // Видаляємо все, крім цифр (наприклад, "Ціна: 5 000 грн" перетвориться на "5000")
-        const priceOnly = text.replace(/\D/g, '');
-        const finalPrice = parseInt(priceOnly) || 0;
-
-        // Генеруємо посилання на пошук самостійно (це 100% робочий варіант)
+        // Витягуємо тільки цифри
+        const price = parseInt(text.replace(/\D/g, '')) || 0;
         const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}`;
         
-        res.json({ 
-            price: finalPrice, 
-            url: searchUrl 
-        });
+        res.json({ price: price, url: searchUrl });
     } catch (e) {
-        console.error("DETAILED ERROR:", e);
-        res.status(500).json({ price: 0, url: "#", error: e.message });
+        console.error("AI Error:", e);
+        res.json({ price: 0, url: "#" });
     }
+});
+
+// Railway вимагає слухати порт, який він надає через process.env.PORT
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+    console.log(`Сервер працює на порту ${PORT}`);
 });
