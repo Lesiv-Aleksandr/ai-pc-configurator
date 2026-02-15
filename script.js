@@ -1,89 +1,95 @@
 let components = [];
+// Завантаження історії з пам'яті браузера
 const history = JSON.parse(localStorage.getItem('pc_history') || '{"types":[], "models":[]}');
 
-// Оновлення підказок при завантаженні
 updateDatalists();
 
 async function handleFormSubmit() {
-    const typeInput = document.getElementById('comp-type');
-    const modelInput = document.getElementById('comp-model');
-    const type = typeInput.value.trim();
-    const model = modelInput.value.trim();
+    const tInput = document.getElementById('comp-type');
+    const mInput = document.getElementById('comp-model');
+    const type = tInput.value.trim();
+    const model = mInput.value.trim();
 
-    if (!type || !model) return;
+    if (!type || !model) return alert("Введіть назву та модель!");
 
-    // Зберігаємо в історію для підказок
     saveToHistory(type, model);
 
     const id = Date.now();
-    components.push({ id, type, model, price: 0, loading: true });
+    components.push({ id, type, model, price: 0, loading: true, url: "#" });
+    
+    tInput.value = '';
+    mInput.value = '';
     updateUI();
 
-    typeInput.value = '';
-    modelInput.value = '';
-
-    await fetchPrice(id, model);
+    await fetchSinglePrice(id, model);
 }
 
-async function fetchPrice(id, model) {
+async function fetchSinglePrice(id, model) {
     try {
-        const res = await fetch('/api', {
+        const response = await fetch('/api', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ model })
         });
-        const data = await res.json();
+        const data = await response.json();
         
-        const idx = components.findIndex(c => c.id === id);
-        if (idx !== -1) {
-            components[idx].price = data.price;
-            components[idx].url = data.url;
-            components[idx].loading = false;
+        const index = components.findIndex(c => c.id === id);
+        if (index !== -1) {
+            components[index].price = data.price;
+            components[index].url = data.url;
+            components[index].loading = false;
             updateUI();
         }
-    } catch (e) {
-        console.error(e);
+    } catch (err) {
+        console.error("Помилка запиту:", err);
     }
 }
 
 async function refreshAllPrices() {
-    for (let comp of components) {
-        comp.loading = true;
+    for (let c of components) {
+        c.loading = true;
         updateUI();
-        await fetchPrice(comp.id, comp.model);
+        await fetchSinglePrice(c.id, c.model);
     }
 }
 
-function saveToHistory(type, model) {
-    if (!history.types.includes(type)) history.types.push(type);
-    if (!history.models.includes(model)) history.models.push(model);
+function saveToHistory(t, m) {
+    if (!history.types.includes(t)) history.types.push(t);
+    if (!history.models.includes(m)) history.models.push(m);
     localStorage.setItem('pc_history', JSON.stringify(history));
     updateDatalists();
 }
 
 function updateDatalists() {
-    document.getElementById('prev-types').innerHTML = history.types.map(t => `<option value="${t}">`).join('');
-    document.getElementById('prev-models').innerHTML = history.models.map(m => `<option value="${m}">`).join('');
+    document.getElementById('type-list').innerHTML = history.types.map(x => `<option value="${x}">`).join('');
+    document.getElementById('model-list').innerHTML = history.models.map(x => `<option value="${x}">`).join('');
 }
 
 function updateUI() {
     const container = document.getElementById('components-container');
+    if (components.length === 0) {
+        container.innerHTML = `<div class="text-center py-20 text-slate-600 italic">Список компонентів порожній...</div>`;
+        document.getElementById('grand-total').innerText = "0 ₴";
+        return;
+    }
+
     container.innerHTML = components.map(c => `
-        <div class="glass p-5 rounded-3xl flex justify-between items-center border border-white/5">
+        <div class="glass p-6 rounded-[2rem] flex justify-between items-center transition hover:border-white/20">
             <div>
-                <div class="text-blue-500 text-[10px] font-bold uppercase">${c.type}</div>
-                <div class="text-white font-bold">${c.model}</div>
-                ${c.loading ? '<span class="text-xs text-slate-500">Оновлення...</span>' : `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 underline">Магазин</a>`}
+                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest mb-1">${c.type}</div>
+                <div class="text-xl font-bold">${c.model}</div>
+                ${c.loading ? '<div class="text-xs text-slate-500 animate-pulse mt-1">Оновлюю ціну...</div>' : 
+                `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 hover:text-blue-200 underline inline-block mt-1">Переглянути в магазині</a>`}
             </div>
             <div class="text-right">
-                <div class="text-2xl font-black">${c.loading ? '...' : c.price.toLocaleString() + ' ₴'}</div>
-                <button onclick="deleteComp(${c.id})" class="text-[10px] text-red-500 uppercase">Видалити</button>
+                <div class="text-3xl font-black italic">${c.loading ? '...' : c.price.toLocaleString('uk-UA') + ' ₴'}</div>
+                <button onclick="deleteComp(${c.id})" class="text-[10px] text-red-500 font-bold uppercase mt-2 hover:text-red-400">Видалити</button>
             </div>
         </div>
     `).join('');
-    
-    const total = components.reduce((sum, c) => sum + c.price, 0);
-    document.getElementById('grand-total').innerText = total.toLocaleString() + ' ₴';
+
+    const total = components.reduce((sum, c) => sum + (c.price || 0), 0);
+    document.getElementById('grand-total').innerText = total.toLocaleString('uk-UA') + ' ₴';
 }
 
 function deleteComp(id) {
