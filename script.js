@@ -1,19 +1,14 @@
-console.log("ВЕРСІЯ 4.0: Стабільне оновлення ціни");
-
 let components = [];
 
 async function handleFormSubmit() {
     const typeInput = document.getElementById('comp-type');
     const modelInput = document.getElementById('comp-model');
-    
     const type = typeInput.value.trim();
     const model = modelInput.value.trim();
-    
-    if (!type || !model) return alert("Заповніть всі поля!");
 
-    // 1. Створюємо унікальний ID для цього конкретного запиту
+    if (!type || !model) return alert("Заповніть поля!");
+
     const currentId = Date.now();
-    
     const newComp = {
         id: currentId,
         type: type.toUpperCase(),
@@ -23,48 +18,37 @@ async function handleFormSubmit() {
         loading: true
     };
 
-    // 2. Додаємо в масив та миттєво малюємо
     components.push(newComp);
     updateUI();
-    modelInput.value = ''; // Очищаємо поле вводу
+    modelInput.value = '';
 
     try {
-        // 3. Запит до вашого сервера Railway
         const response = await fetch('/api', { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ model: model })
         });
 
-        if (!response.ok) throw new Error("Сервер не відповів");
         const data = await response.json();
 
-        // 4. Знаходимо саме ТУ деталь, яку додали (за ID)
-        const targetIndex = components.findIndex(c => c.id === currentId);
-        
-        if (targetIndex !== -1) {
-            // Очищаємо ціну від зайвих знаків
-            const cleanPrice = Number(String(data.price).replace(/[^0-9]/g, '')) || 0;
+        // Шукаємо наш компонент у масиві
+        const idx = components.findIndex(c => c.id === currentId);
+        if (idx !== -1) {
+            components[idx].price = data.price || 0;
             
-            // Якщо ШІ не дав URL, робимо пошук в Google
-            let cleanUrl = data.url && data.url !== "#" ? data.url : `https://www.google.com/search?q=${encodeURIComponent(model)}+купити`;
-            if (!cleanUrl.startsWith('http')) cleanUrl = `https://${cleanUrl}`;
-
-            // Оновлюємо дані в масиві
-            components[targetIndex].price = cleanPrice;
-            components[targetIndex].url = cleanUrl;
-            components[targetIndex].loading = false;
-
-            console.log(`Дані для ${model} отримано: ${cleanPrice} грн`);
-            updateUI(); // Перемальовуємо список з новими даними
+            // Якщо посилання "криве", робимо пошук в Google
+            let link = data.url && data.url !== "#" ? data.url : `https://www.google.com/search?q=${encodeURIComponent(model)}+купити`;
+            if (!link.startsWith('http')) link = 'https://' + link;
+            
+            components[idx].url = link;
+            components[idx].loading = false;
+            updateUI();
         }
-
-    } catch (error) {
-        console.error("Помилка оновлення:", error);
-        const targetIndex = components.findIndex(c => c.id === currentId);
-        if (targetIndex !== -1) {
-            components[targetIndex].loading = false;
-            components[targetIndex].price = 0;
+    } catch (e) {
+        console.error("Error updating price:", e);
+        const idx = components.findIndex(c => c.id === currentId);
+        if (idx !== -1) {
+            components[idx].loading = false;
             updateUI();
         }
     }
@@ -80,48 +64,26 @@ function updateUI() {
 
     components.forEach(c => {
         total += c.price;
-        
-        const priceHTML = c.loading 
-            ? `<span class="text-blue-400 animate-pulse">Пошук...</span>` 
-            : `${c.price.toLocaleString()} ₴`;
-
-        const linkHTML = c.loading 
-            ? `<span class="text-xs text-slate-500">Завантаження посилання...</span>`
-            : `<a href="${c.url}" target="_blank" rel="noopener" class="text-xs text-blue-400 underline">В магазин</a>`;
+        const priceDisplay = c.loading ? `<span class="animate-pulse text-blue-400">Шукаю...</span>` : `${c.price.toLocaleString()} ₴`;
+        const linkDisplay = c.loading ? `<span class="text-slate-500 italic">Очікуйте...</span>` : `<a href="${c.url}" target="_blank" class="text-blue-400 underline">В магазин</a>`;
 
         container.innerHTML += `
-            <div class="glass p-4 rounded-2xl flex justify-between items-center mb-3 border border-white/5 animate-fade-in">
+            <div class="glass p-4 rounded-2xl flex justify-between items-center mb-3">
                 <div>
                     <div class="text-xs text-blue-500 font-bold">${c.type}</div>
                     <div class="text-white font-semibold">${c.model}</div>
-                    ${linkHTML}
+                    ${linkDisplay}
                 </div>
                 <div class="text-right">
-                    <div class="text-xl text-white font-bold">${priceHTML}</div>
-                    <button onclick="deleteComp(${c.id})" class="text-xs text-red-500 hover:text-red-400">Видалити</button>
+                    <div class="text-xl text-white font-bold">${priceDisplay}</div>
+                    <button onclick="deleteComp(${c.id})" class="text-xs text-red-500">Видалити</button>
                 </div>
             </div>`;
     });
-
     if (totalEl) totalEl.innerText = `${total.toLocaleString()} ₴`;
 }
 
 function deleteComp(id) {
     components = components.filter(c => c.id !== id);
     updateUI();
-}
-
-async function refreshAllPrices() {
-    if (components.length === 0) return;
-    alert("Оновлюю всі ціни через Gemini...");
-    // Логіка оновлення вже існуючих елементів
-    const oldComponents = [...components];
-    components = [];
-    updateUI();
-    for(let item of oldComponents) {
-        // Емулюємо додавання заново для кожного
-        document.getElementById('comp-type').value = item.type;
-        document.getElementById('comp-model').value = item.model;
-        await handleFormSubmit();
-    }
 }
