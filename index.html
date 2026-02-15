@@ -7,39 +7,39 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); }
-        body { background: #0b0f1a; color: white; min-height: 100vh; font-family: ui-sans-serif, system-ui; }
+        body { background: #0b0f1a; color: white; min-height: 100vh; font-family: system-ui, sans-serif; }
     </style>
 </head>
 <body class="p-6">
     <div class="max-w-5xl mx-auto">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
+        <header class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
             <div>
                 <h1 class="text-4xl font-black italic tracking-tighter text-blue-500 uppercase">AI PC CONFIG</h1>
-                <p class="text-slate-400">Ціни в реальному часі через Gemini 2.0</p>
+                <p class="text-slate-400">Актуальні ціни через Gemini 2.0</p>
             </div>
             <div class="glass p-8 rounded-[2rem] text-right min-w-[250px]">
-                <span class="text-xs uppercase tracking-widest text-slate-500 font-bold">Загальна вартість</span>
-                <div id="grand-total" class="text-5xl font-black italic mt-1">0 ₴</div>
-                <button onclick="refreshAllPrices()" class="text-blue-400 text-xs mt-3 hover:text-blue-300 transition underline decoration-dotted">↻ Оновити всі ціни</button>
+                <span class="text-xs uppercase tracking-widest text-slate-500 font-bold">Загальна сума</span>
+                <div id="grand-total" class="text-5xl font-black italic mt-1 text-white">0 ₴</div>
+                <button onclick="refreshAllPrices()" class="text-blue-400 text-xs mt-3 hover:text-blue-300 transition underline">↻ Оновити всі ціни</button>
             </div>
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
             <aside class="glass p-8 rounded-[2rem] h-fit">
-                <h2 class="text-xl font-bold mb-6 flex items-center gap-2">Додати деталь</h2>
+                <h2 class="text-xl font-bold mb-6">Додати деталь</h2>
                 <div class="space-y-5">
-                    <input list="type-list" id="comp-type" placeholder="Категорія (напр. GPU)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition">
-                    <datalist id="type-list"></datalist>
+                    <input list="type-history" id="comp-type" placeholder="Категорія (напр. GPU)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 text-white">
+                    <datalist id="type-history"></datalist>
 
-                    <input list="model-list" id="comp-model" placeholder="Модель (напр. RTX 4070)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 transition">
-                    <datalist id="model-list"></datalist>
+                    <input list="model-history" id="comp-model" placeholder="Модель (напр. RTX 4070)" class="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 text-white">
+                    <datalist id="model-history"></datalist>
 
-                    <button onclick="handleFormSubmit()" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-bold text-lg shadow-xl shadow-blue-900/20 active:scale-95 transition">Додати до списку</button>
+                    <button onclick="handleFormSubmit()" class="w-full bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-bold text-lg transition active:scale-95 shadow-lg shadow-blue-900/20 text-white">Додати до списку</button>
                 </div>
             </aside>
 
             <main class="lg:col-span-2 space-y-4" id="components-container">
-                <div class="text-center py-20 text-slate-600 italic">Список компонентів порожній...</div>
+                <div class="text-center py-20 text-slate-600 italic">Список поки що порожній...</div>
             </main>
         </div>
     </div>
