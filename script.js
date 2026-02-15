@@ -1,6 +1,5 @@
 let components = [];
-// Завантаження історії з локальної пам'яті браузера
-const history = JSON.parse(localStorage.getItem('ai_pc_history') || '{"types":[], "models":[]}');
+const history = JSON.parse(localStorage.getItem('ai_price_history') || '{"types":[], "models":[]}');
 
 updateDatalists();
 
@@ -12,23 +11,23 @@ async function handleFormSubmit() {
 
     if (!type || !model) return;
 
-    // Зберігаємо в історію
     if (!history.types.includes(type)) history.types.push(type);
     if (!history.models.includes(model)) history.models.push(model);
-    localStorage.setItem('ai_pc_history', JSON.stringify(history));
+    localStorage.setItem('ai_price_history', JSON.stringify(history));
     updateDatalists();
 
     const id = Date.now();
-    components.push({ id, type, model, price: 0, loading: true, url: "#" });
+    components.push({ id, type, model, price: 0, loading: true, url: "#", shop: "Аналіз цін..." });
     
     tInput.value = '';
     mInput.value = '';
     updateUI();
 
-    await fetchPriceFromServer(id, model);
+    await fetchBestPrice(id, model);
 }
 
-async function fetchPriceFromServer(id, model) {
+async function fetchBestPrice(id, model) {
+    console.log(`Надсилаю запит до сервера для: ${model}`);
     try {
         const response = await fetch('/api', {
             method: 'POST',
@@ -37,23 +36,28 @@ async function fetchPriceFromServer(id, model) {
         });
         const data = await response.json();
         
+        // Ось тут логуємо те, що повернув ШІ через наш сервер
+        console.log("ОТРИМАНО ВІД СЕРВЕРА:", data);
+
         const idx = components.findIndex(c => c.id === id);
         if (idx !== -1) {
             components[idx].price = data.price;
             components[idx].url = data.url;
+            components[idx].shop = data.shop;
             components[idx].loading = false;
             updateUI();
         }
     } catch (err) {
-        console.error("Помилка:", err);
+        console.error("Помилка отримання даних:", err);
     }
 }
 
 async function refreshAllPrices() {
+    console.log("Запуск масового оновлення цін...");
     for (let c of components) {
         c.loading = true;
         updateUI();
-        await fetchPriceFromServer(c.id, c.model);
+        await fetchBestPrice(c.id, c.model);
     }
 }
 
@@ -65,22 +69,22 @@ function updateDatalists() {
 function updateUI() {
     const container = document.getElementById('components-container');
     if (components.length === 0) {
-        container.innerHTML = `<div class="text-center py-20 text-slate-600 italic">Список поки що порожній...</div>`;
+        container.innerHTML = `<div class="text-center py-20 text-slate-600 italic">Список порожній...</div>`;
         document.getElementById('grand-total').innerText = "0 ₴";
         return;
     }
 
     container.innerHTML = components.map(c => `
-        <div class="glass p-6 rounded-[2rem] flex justify-between items-center transition hover:border-white/20">
+        <div class="glass p-6 rounded-[2rem] flex justify-between items-center animate-fade-in">
             <div>
-                <div class="text-blue-500 text-[10px] font-black uppercase mb-1">${c.type}</div>
+                <div class="text-blue-500 text-[10px] font-black uppercase tracking-widest mb-1">${c.type}</div>
                 <div class="text-xl font-bold text-white">${c.model}</div>
-                ${c.loading ? '<span class="text-xs text-slate-500 animate-pulse">Gemini шукає ціну...</span>' : 
-                `<a href="${c.url}" target="_blank" class="text-xs text-blue-400 underline hover:text-blue-200">Переглянути в магазині</a>`}
+                ${c.loading ? '<span class="text-xs text-slate-500 animate-pulse">Gemini порівнює пропозиції...</span>' : 
+                `<a href="${c.url}" target="_blank" class="text-xs text-green-400 underline font-bold">Найкраща пропозиція на ${c.shop}</a>`}
             </div>
             <div class="text-right">
                 <div class="text-3xl font-black italic text-white">${c.loading ? '...' : c.price.toLocaleString('uk-UA') + ' ₴'}</div>
-                <button onclick="deleteComp(${c.id})" class="text-[10px] text-red-500 font-bold uppercase mt-2 hover:text-red-400">Видалити</button>
+                <button onclick="deleteComp(${c.id})" class="text-[10px] text-red-500 font-bold uppercase mt-2 hover:opacity-70 transition">Видалити</button>
             </div>
         </div>
     `).join('');
