@@ -9,53 +9,29 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-2.0-flash",
-            generationConfig: {
-                temperature: 0,
-                responseMimeType: "application/json"
-            }
-        });
-
-        const deviceModel = req.body.model;
-
-        const prompt = `
-        Оціни середню ринкову ціну в Україні для: ${deviceModel}.
+        // Використовуємо стабільну 2.0 Flash
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         
-        Поверни ТІЛЬКИ JSON у форматі:
-        {
-          "price": number
-        }
-
-        Без пояснень. Без тексту. Тільки JSON.
-        `;
+        const prompt = `Aktualna cina v UAH (Ukraine, Feb 2026) dlya: ${req.body.model}. 
+        Napyshy TILKY CHYSLO. Bez tekstu. Jaksho cina 25000.50 - napyshy 25000.`;
 
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        const text = result.response.text().trim().replace(/\D/g, '');
+        
+        let price = parseInt(text) || 0;
+        
+        // Корекція розрядності (захист від помилок ШІ)
+        if (price > 500000) price = Math.floor(price / 100);
 
-        let price = 0;
-
-        try {
-            const parsed = JSON.parse(text);
-            if (typeof parsed.price === "number") {
-                price = parsed.price;
-            }
-        } catch (e) {
-            console.error("JSON parse error:", text);
-        }
-
-        const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(deviceModel)}`;
-
-        res.json({ price, url: searchUrl });
-
-    } catch (error) {
-        console.error("Серверна помилка:", error.message);
-        res.status(500).json({ price: 0, url: "#", error: error.message });
+        res.json({ 
+            price, 
+            url: `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}` 
+        });
+    } catch (e) {
+        console.error("AI Error:", e.message);
+        res.json({ price: 0, url: "#" });
     }
 });
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Сервер запущено на порту ${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Server OK on ${PORT}`));
