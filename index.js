@@ -14,7 +14,7 @@ app.post('/api', async (req, res) => {
             return res.json({ price: 0, url: "#", error: "Ключ API не налаштовано" });
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
         const prompt = `Напиши тільки ціну в гривнях для ${req.body.model}. Тільки число, без тексту.`;
         
         const result = await model.generateContent(prompt);
