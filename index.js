@@ -5,35 +5,38 @@ const app = express();
 app.use(express.json());
 app.use(express.static('./'));
 
-// Обов'язково перевіряємо ключ
+// Ініціалізація з використанням ключа з налаштувань Railway
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 app.post('/api', async (req, res) => {
     try {
-        if (!process.env.GEMINI_API_KEY) {
-            return res.json({ price: 0, url: "#", error: "Ключ API не налаштовано" });
-        }
-
+        // Використовуємо саме версію gemini-2.5-flash
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-        const prompt = `Напиши тільки ціну в гривнях для ${req.body.model}. Тільки число, без тексту.`;
         
+        const deviceModel = req.body.model || "Unknown component";
+        const prompt = `Ціна в грн для ${deviceModel}. Напиши тільки число.`;
+
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text().trim();
         
-        // Витягуємо тільки цифри
+        // Очищення результату: залишаємо лише цифри
         const price = parseInt(text.replace(/\D/g, '')) || 0;
-        const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(req.body.model)}`;
+        
+        // Пряме посилання на пошук у Telemart
+        const searchUrl = `https://telemart.ua/ua/search/?q=${encodeURIComponent(deviceModel)}`;
         
         res.json({ price: price, url: searchUrl });
-    } catch (e) {
-        console.error("AI Error:", e);
-        res.json({ price: 0, url: "#" });
+
+    } catch (error) {
+        console.error("AI Error:", error.message);
+        // Повертаємо об'єкт з нулем, щоб фронтенд не "зависав"
+        res.json({ price: 0, url: "#", error: error.message });
     }
 });
 
-// Railway вимагає слухати порт, який він надає через process.env.PORT
+// Налаштування порту для Railway (0.0.0.0 обов'язково для усунення 502)
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Сервер працює на порту ${PORT}`);
 });
